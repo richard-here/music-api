@@ -25,16 +25,16 @@ class AlbumsService {
 
   async getAlbumById(id) {
     const query = {
-      text: 'SELECT A.id, A.name, A.year, JSON_AGG(JSON_BUILD_OBJECT(\'title\', S.title, \'performer\', S.performer)) AS songs '
-        + 'FROM albums A LEFT JOIN songs S ON A.id = S.album_id WHERE A.id = $1 GROUP BY A.id',
+      text: `SELECT A.id, A.name, A.year, JSON_AGG(JSON_BUILD_OBJECT('title', S.title, 'performer', S.performer)) AS songs FROM albums A
+        LEFT JOIN songs S ON A.id = S.album_id
+        WHERE A.id = $1 GROUP BY A.id`,
       values: [id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError(`Album with id ${id} not found`);
     }
-    result.rows.map(mapAlbumDBToModel);
-    return result.rows[0];
+    return mapAlbumDBToModel(result.rows[0]);
   }
 
   async editAlbumById(id, { name, year }) {
@@ -43,7 +43,7 @@ class AlbumsService {
       values: [name, year, id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError(`Album with id ${id} not found, so update was not done`);
     }
   }
@@ -55,7 +55,7 @@ class AlbumsService {
     };
 
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError(`Album with id ${id} not found, so deletion was not possible`);
     }
   }

@@ -40,4 +40,33 @@ const mapSongDBToSummaryModel = ({
   performer,
 });
 
-module.exports = { mapAlbumDBToModel, mapSongDBToModel, mapSongDBToSummaryModel };
+const mapPlaylistDBToModel = ({
+  id,
+  name,
+  owner,
+}) => ({
+  id,
+  name,
+  username: owner,
+});
+
+const mapPlaylistWithSongsDBToModel = ({
+  id,
+  name,
+  username,
+  songs,
+}) => ({
+  id,
+  name,
+  username,
+  songs: songs.filter((song) => song)
+    .map((song) => ({ id: song.id, title: song.title, performer: song.performer })),
+});
+
+module.exports = {
+  mapAlbumDBToModel,
+  mapSongDBToModel,
+  mapSongDBToSummaryModel,
+  mapPlaylistDBToModel,
+  mapPlaylistWithSongsDBToModel,
+};
