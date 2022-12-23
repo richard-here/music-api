@@ -3,6 +3,7 @@ const {
   PostPlaylistPayloadSchema,
   PostSongToPlaylistPayloadSchema,
   DeleteSongFromPlaylistPayloadSchema,
+  GetActiviesFromPlaylistPayloadSchema,
 } = require('./schema');
 
 const PlaylistsValidator = {
@@ -20,6 +21,12 @@ const PlaylistsValidator = {
   },
   validateDeleteSongFromPlaylistPayload: (payload) => {
     const validationResult = DeleteSongFromPlaylistPayloadSchema.validate(payload);
+    if (validationResult.error) {
+      throw new InvariantError(validationResult.error.message);
+    }
+  },
+  validateGetActivitiesFromPlaylistPayload: (payload) => {
+    const validationResult = GetActiviesFromPlaylistPayloadSchema.validate(payload);
     if (validationResult.error) {
       throw new InvariantError(validationResult.error.message);
     }

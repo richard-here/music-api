@@ -24,15 +24,23 @@ class PlaylistsService {
     return result.rows[0].id;
   }
 
-  async getPlaylists({ owner }) {
+  async getPlaylists({ userId }) {
     const query = {
-      text: 'SELECT * FROM playlists WHERE owner = $1',
-      values: [owner],
+      text: `SELECT P.id, P.name, U.username AS owner FROM playlists P
+        INNER JOIN users U ON U.id = P.owner
+        WHERE P.owner = $1
+        UNION
+        SELECT C.id, P.name, U.username AS owner FROM collaborations C
+        INNER JOIN playlists P ON P.id = C.playlist_id
+        INNER JOIN users U ON U.id = P.owner
+        WHERE C.user_id = $1
+        `,
+      values: [userId],
     };
 
     const result = await this._pool.query(query);
     if (!result.rowCount) {
-      throw new InvariantError('Data given is invalid and get failed');
+      return [];
     }
     return result.rows.map(mapPlaylistDBToModel);
   }
@@ -56,7 +64,6 @@ class PlaylistsService {
       values: [playlistId, songId],
     };
 
-    console.log(query);
     const result = await this._pool.query(query);
     if (!result.rowCount) {
       throw new InvariantError('Ids given might be incorrect. Insertion failed');
@@ -74,7 +81,6 @@ class PlaylistsService {
       values: [playlistId],
     };
 
-    console.log(query);
     const result = await this._pool.query(query);
     if (!result.rowCount) {
       throw new NotFoundError('Id given is not found. Get data failed');
@@ -95,7 +101,7 @@ class PlaylistsService {
     }
   }
 
-  async verifyPlaylistOwner({ playlistId, owner }) {
+  async verifyPlaylistExists({ playlistId }) {
     const query = {
       text: 'SELECT * FROM playlists WHERE id = $1',
       values: [playlistId],
@@ -105,10 +111,17 @@ class PlaylistsService {
     if (!result.rowCount) {
       throw new NotFoundError('Playlist with given id not found');
     }
+  }
 
-    const playlist = result.rows[0];
-    if (playlist.owner !== owner) {
-      throw new AuthorizationError('You are not authorized to delete this playlist');
+  async verifyPlaylistOwner({ playlistId, owner }) {
+    const query = {
+      text: 'SELECT * FROM playlists WHERE id = $1 AND owner = $2',
+      values: [playlistId, owner],
+    };
+
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new AuthorizationError('You are not the owner of this playlist');
     }
   }
 }

@@ -12,8 +12,13 @@ const DeleteSongFromPlaylistPayloadSchema = Joi.object({
   songId: Joi.string().required(),
 });
 
+const GetActiviesFromPlaylistPayloadSchema = Joi.object({
+  playlistId: Joi.string().required(),
+});
+
 module.exports = {
   PostPlaylistPayloadSchema,
   PostSongToPlaylistPayloadSchema,
   DeleteSongFromPlaylistPayloadSchema,
+  GetActiviesFromPlaylistPayloadSchema,
 };
