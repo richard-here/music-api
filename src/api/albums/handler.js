@@ -6,6 +6,7 @@ class AlbumsHandler {
     this._validator = validator;
     this._albumLikesService = albumLikesService;
     this._cacheService = cacheService;
+    this.albumLikeCacheKey = (id) => `albums_likes:${id}`;
 
     autoBind(this);
   }
@@ -75,7 +76,7 @@ class AlbumsHandler {
       await this._albumLikesService.addLikeToAlbum({ albumId: id, userId: credentialId });
     }
 
-    this._cacheService.delete(`albums_likes:${id}`);
+    await this._cacheService.delete(this.albumLikeCacheKey(id));
 
     const response = h.response({
       status: 'success',
@@ -88,11 +89,11 @@ class AlbumsHandler {
   async getAlbumLikesHandler(request, h) {
     const { id } = request.params;
     try {
-      const likes = await this._cacheService.get(`albums_likes:${id}`);
+      const likes = parseInt(await this._cacheService.get(this.albumLikeCacheKey(id)), 10);
       const response = h.response({
         status: 'success',
         data: {
-          likes: parseInt(likes, 10),
+          likes,
         },
       });
       response.code(200);
@@ -100,7 +101,7 @@ class AlbumsHandler {
       return response;
     } catch (error) {
       console.log(error.message);
-      console.log('Attempting to fetch from DB');
+      console.log('Attempting to fetch album like count from DB');
     }
 
     const likes = await this._albumLikesService.getLikesOfAlbum({ albumId: id });

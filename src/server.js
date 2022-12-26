@@ -149,6 +149,7 @@ const init = async () => {
         songsService,
         collaborationsService,
         activitiesService,
+        cacheService,
       },
     },
     {
