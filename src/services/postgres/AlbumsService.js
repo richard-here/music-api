@@ -12,7 +12,7 @@ class AlbumsService {
   async addAlbum({ name, year }) {
     const id = `album-${nanoid(16)}`;
     const query = {
-      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
+      text: 'INSERT INTO albums(id, name, year) VALUES($1, $2, $3) RETURNING id',
       values: [id, name, year],
     };
 
@@ -25,7 +25,7 @@ class AlbumsService {
 
   async getAlbumById(id) {
     const query = {
-      text: `SELECT A.id, A.name, A.year, JSON_AGG(JSON_BUILD_OBJECT('title', S.title, 'performer', S.performer)) AS songs FROM albums A
+      text: `SELECT A.id, A.name, A.year, A.cover_url, JSON_AGG(JSON_BUILD_OBJECT('title', S.title, 'performer', S.performer)) AS songs FROM albums A
         LEFT JOIN songs S ON A.id = S.album_id
         WHERE A.id = $1 GROUP BY A.id`,
       values: [id],
@@ -57,6 +57,17 @@ class AlbumsService {
     const result = await this._pool.query(query);
     if (!result.rowCount) {
       throw new NotFoundError(`Album with id ${id} not found, so deletion was not possible`);
+    }
+  }
+
+  async addAlbumCoverById({ id, fileLocation }) {
+    const query = {
+      text: 'UPDATE albums SET cover_url = $1 WHERE Id = $2 RETURNING id',
+      values: [fileLocation, id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rowCount) {
+      throw new NotFoundError('Album with given id not found, so adding cover was not done');
     }
   }
 }

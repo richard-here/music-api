@@ -1,9 +1,11 @@
 const autoBind = require('auto-bind');
 
 class AlbumsHandler {
-  constructor(service, validator) {
+  constructor(service, validator, albumLikesService, cacheService) {
     this._service = service;
     this._validator = validator;
+    this._albumLikesService = albumLikesService;
+    this._cacheService = cacheService;
 
     autoBind(this);
   }
@@ -54,6 +56,60 @@ class AlbumsHandler {
     const response = h.response({
       status: 'success',
       message: 'Album deleted successfully',
+    });
+    response.code(200);
+    return response;
+  }
+
+  async postAlbumLikeHandler(request, h) {
+    const { id } = request.params;
+    const { id: credentialId } = request.auth.credentials;
+    await this._service.getAlbumById(id);
+    const isAlbumLiked = await this._albumLikesService.verifyAlbumLiked({
+      albumId: id,
+      userId: credentialId,
+    });
+    if (isAlbumLiked) {
+      await this._albumLikesService.deleteLikeFromAlbum({ albumId: id, userId: credentialId });
+    } else {
+      await this._albumLikesService.addLikeToAlbum({ albumId: id, userId: credentialId });
+    }
+
+    this._cacheService.delete(`albums_likes:${id}`);
+
+    const response = h.response({
+      status: 'success',
+      message: `Album ${isAlbumLiked ? 'disliked' : 'liked'} successfully`,
+    });
+    response.code(201);
+    return response;
+  }
+
+  async getAlbumLikesHandler(request, h) {
+    const { id } = request.params;
+    try {
+      const likes = await this._cacheService.get(`albums_likes:${id}`);
+      const response = h.response({
+        status: 'success',
+        data: {
+          likes: parseInt(likes, 10),
+        },
+      });
+      response.code(200);
+      response.header('X-Data-Source', 'cache');
+      return response;
+    } catch (error) {
+      console.log(error.message);
+      console.log('Attempting to fetch from DB');
+    }
+
+    const likes = await this._albumLikesService.getLikesOfAlbum({ albumId: id });
+    await this._cacheService.set(`albums_likes:${id}`, JSON.stringify(likes));
+    const response = h.response({
+      status: 'success',
+      data: {
+        likes,
+      },
     });
     response.code(200);
     return response;
