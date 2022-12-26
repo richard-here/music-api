@@ -37,6 +37,11 @@ const CollaborationsService = require('./services/postgres/CollaborationsService
 // Activities
 const ActivitiesService = require('./services/postgres/ActivitiesService');
 
+// Exports
+const _exports = require('./api/exports');
+const ExportValidator = require('./validator/exports');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+
 // Exceptions
 const InvariantError = require('./exceptions/InvariantError');
 const NotFoundError = require('./exceptions/NotFoundError');
@@ -132,6 +137,13 @@ const init = async () => {
         validator: CollaborationValidator,
         playlistsService,
         usersService,
+      },
+    },
+    {
+      plugin: _exports,
+      options: {
+        service: ProducerService,
+        validator: ExportValidator,
       },
     },
   ]);

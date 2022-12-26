@@ -30,12 +30,7 @@ class ActivitiesService {
       values: [playlistId],
     };
 
-    console.log(query);
     const result = await this._pool.query(query);
-    console.log(result.rows);
-    if (!result.rowCount) {
-      return { playlistId, activities: [] };
-    }
     return { playlistId, activities: result.rows };
   }
 }
