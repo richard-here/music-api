@@ -15,8 +15,6 @@ class PlaylistHandler {
     this._collaborationsService = collaborationsService;
     this._activitiesService = activitiesService;
     this._cacheService = cacheService;
-    this.playlistsCacheKey = (credentialId) => `playlists:${credentialId}`;
-    this.playlistsWithSongsCacheKey = (playlistId) => `playlists_with_songs:${playlistId}`;
 
     autoBind(this);
   }
@@ -29,7 +27,7 @@ class PlaylistHandler {
     const id = await this._playlistsService.addPlaylist({ name, owner: credentialId });
 
     // Remove cache of user's playlists as they have been updated
-    await this._cacheService.delete(this.playlistsCacheKey(credentialId));
+    await this._cacheService.delete(this._cacheService.cacheKeys.playlists(credentialId));
     const response = h.response({
       status: 'success',
       data: {
@@ -45,7 +43,7 @@ class PlaylistHandler {
 
     try {
       const playlists = JSON.parse(await this._cacheService
-        .get(this.playlistsCacheKey(credentialId)));
+        .get(this._cacheService.cacheKeys.playlists(credentialId)));
       const response = h.response({
         status: 'success',
         data: {
@@ -63,7 +61,10 @@ class PlaylistHandler {
     const playlists = await this._playlistsService.getPlaylists({ userId: credentialId });
 
     // Set user's playlist cache
-    await this._cacheService.set(this.playlistsCacheKey(credentialId), JSON.stringify(playlists));
+    await this._cacheService.set(
+      this._cacheService.cacheKeys.playlists(credentialId),
+      JSON.stringify(playlists),
+    );
     const response = h.response({
       status: 'success',
       data: {
@@ -81,10 +82,8 @@ class PlaylistHandler {
     await this._playlistsService.verifyPlaylistOwner({ playlistId, owner: credentialId });
     await this._playlistsService.deletePlaylistById(playlistId);
 
-    // Remove cache of this playlist with songs cache and playlists of user
-    // as playlists of user has been altered and this particular playlist no longer exists
-    await this._cacheService.delete(this.playlistsCacheKey(credentialId));
-    await this._cacheService.delete(this.playlistsWithSongsCacheKey(playlistId));
+    // Remove cache of this user's playlists
+    await this._cacheService.delete(this._cacheService.cacheKeys.playlists(credentialId));
 
     const response = h.response({
       status: 'success',
@@ -108,9 +107,6 @@ class PlaylistHandler {
       userId: credentialId, playlistId, songId, action: 'add',
     });
 
-    // Remove cache of this playlist with songs as original data has been altered
-    await this._cacheService.delete(this.playlistsWithSongsCacheKey(playlistId));
-
     const response = h.response({
       status: 'success',
       message: 'Song added to playlist successfully',
@@ -123,32 +119,9 @@ class PlaylistHandler {
     const { id: credentialId } = request.auth.credentials;
     const { id: playlistId } = request.params;
 
-    try {
-      const playlist = JSON.parse(await this._cacheService
-        .get(this.playlistsWithSongsCacheKey(playlistId)));
-      const response = h.response({
-        status: 'success',
-        data: {
-          playlist,
-        },
-      });
-      response.code(200);
-      response.header('X-Data-Source', 'cache');
-      return response;
-    } catch (error) {
-      console.log(error.message);
-      console.log('Attempting to fetch playlist with songs from DB');
-    }
-
     await this.verifyModifyingPlaylistAllowed({ playlistId, userId: credentialId });
 
     const playlist = await this._playlistsService.getSongsFromPlaylist({ playlistId });
-
-    // Set cache of this particular playlist
-    await this._cacheService.set(
-      this.playlistsWithSongsCacheKey(playlistId),
-      JSON.stringify(playlist),
-    );
     const response = h.response({
       status: 'success',
       data: {
@@ -170,9 +143,6 @@ class PlaylistHandler {
     await this._activitiesService.addActivityToPlaylist({
       userId: credentialId, playlistId, songId, action: 'delete',
     });
-
-    // Remove cache of this playlist with songs as original data has been altered
-    await this._cacheService.delete(this.playlistsWithSongsCacheKey(playlistId));
 
     const response = h.response({
       status: 'success',

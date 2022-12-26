@@ -114,6 +114,7 @@ const init = async () => {
       options: {
         service: songsService,
         validator: SongValidator,
+        cacheService,
       },
     },
     {
@@ -159,6 +160,7 @@ const init = async () => {
         validator: CollaborationValidator,
         playlistsService,
         usersService,
+        cacheService,
       },
     },
     {
@@ -175,6 +177,7 @@ const init = async () => {
         service: storageService,
         validator: UploadValidator,
         albumsService,
+        cacheService,
       },
     },
   ]);

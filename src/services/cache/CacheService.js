@@ -13,6 +13,12 @@ class CacheService {
     });
 
     this._client.connect();
+    this.cacheKeys = {
+      albumsLikes: (id) => `albums_likes:${id}`,
+      albums: (id) => `albums:${id}`,
+      playlists: (userId) => `playlists:${userId}`,
+      songs: (id) => `songs:${id}`,
+    };
   }
 
   async set(key, value, expirationInSecond = 1800) {

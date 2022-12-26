@@ -6,7 +6,6 @@ class AlbumsHandler {
     this._validator = validator;
     this._albumLikesService = albumLikesService;
     this._cacheService = cacheService;
-    this.albumLikeCacheKey = (id) => `albums_likes:${id}`;
 
     autoBind(this);
   }
@@ -27,7 +26,28 @@ class AlbumsHandler {
 
   async getAlbumByIdHandler(request, h) {
     const { id } = request.params;
+
+    try {
+      const album = JSON.parse(await this._cacheService
+        .get(this._cacheService.cacheKeys.albums(id)));
+      const response = h.response({
+        status: 'success',
+        data: {
+          album,
+        },
+      });
+      response.code(200);
+      response.header('X-Data-Source', 'cache');
+      return response;
+    } catch (error) {
+      console.log(error.message);
+      console.log('Attempting to fetch album with given id from DB');
+    }
+
     const album = await this._service.getAlbumById(id);
+
+    // Set cache for this album
+    await this._cacheService.set(this._cacheService.cacheKeys.albums(id), JSON.stringify(album));
     const response = h.response({
       status: 'success',
       data: {
@@ -43,6 +63,9 @@ class AlbumsHandler {
     const { id } = request.params;
 
     await this._service.editAlbumById(id, request.payload);
+
+    // Remove cache of this album
+    await this._cacheService.delete(this._cacheService.cacheKeys.albums(id));
     const response = h.response({
       status: 'success',
       message: 'Album updated successfully',
@@ -54,6 +77,9 @@ class AlbumsHandler {
   async deleteAlbumByIdHandler(request, h) {
     const { id } = request.params;
     await this._service.deleteAlbumById(id);
+
+    // Remove cache of this album
+    await this._cacheService.delete(this._cacheService.cacheKeys.albums(id));
     const response = h.response({
       status: 'success',
       message: 'Album deleted successfully',
@@ -76,7 +102,7 @@ class AlbumsHandler {
       await this._albumLikesService.addLikeToAlbum({ albumId: id, userId: credentialId });
     }
 
-    await this._cacheService.delete(this.albumLikeCacheKey(id));
+    await this._cacheService.delete(this._cacheService.cacheKeys.albumsLikes(id));
 
     const response = h.response({
       status: 'success',
@@ -89,7 +115,8 @@ class AlbumsHandler {
   async getAlbumLikesHandler(request, h) {
     const { id } = request.params;
     try {
-      const likes = parseInt(await this._cacheService.get(this.albumLikeCacheKey(id)), 10);
+      const likes = parseInt(await this._cacheService
+        .get(this._cacheService.cacheKeys.albumsLikes(id)), 10);
       const response = h.response({
         status: 'success',
         data: {

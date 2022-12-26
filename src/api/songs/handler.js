@@ -1,9 +1,10 @@
 const autoBind = require('auto-bind');
 
 class SongsHandler {
-  constructor(service, validator) {
+  constructor(service, validator, cacheService) {
     this._service = service;
     this._validator = validator;
+    this._cacheService = cacheService;
 
     autoBind(this);
   }
@@ -37,7 +38,28 @@ class SongsHandler {
 
   async getSongByIdHandler(request, h) {
     const { id } = request.params;
+
+    try {
+      const song = JSON.parse(await this._cacheService
+        .get(this._cacheService.cacheKeys.songs(id)));
+      const response = h.response({
+        status: 'success',
+        data: {
+          song,
+        },
+      });
+      response.code(200);
+      response.header('X-Data-Source', 'cache');
+      return response;
+    } catch (error) {
+      console.log(error.message);
+      console.log('Attempting to fetch song with given id from DB');
+    }
+
     const song = await this._service.getSongById(id);
+
+    // Set song cache for this song ID
+    await this._cacheService.set(this._cacheService.cacheKeys.songs(id), JSON.stringify(song));
     const response = h.response({
       status: 'success',
       data: {
@@ -53,6 +75,9 @@ class SongsHandler {
     const { id } = request.params;
 
     await this._service.editSongById(id, request.payload);
+
+    // Remove cache of this song
+    await this._cacheService.delete(this._cacheService.cacheKeys.songs(id));
     const response = h.response({
       status: 'success',
       message: 'Song updated successfully',
@@ -64,6 +89,9 @@ class SongsHandler {
   async deleteSongByIdHandler(request, h) {
     const { id } = request.params;
     await this._service.deleteSongById(id);
+
+    // Remove cache of this song
+    await this._cacheService.delete(this._cacheService.cacheKeys.songs(id));
     const response = h.response({
       status: 'success',
       message: 'Song deleted successfully',
