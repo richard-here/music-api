@@ -47,7 +47,7 @@ REDIS_SERVER=localhost
 Then, run the following.
 ```
 npm install
-npm run migrate
+npm run migrate up
 npm run start-dev
 ```
 
