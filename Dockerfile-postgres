@@ -1,0 +1,12 @@
+ARG pgversion
+FROM postgres:$pgversion
+
+RUN apt-get update && apt-get install -y gettext-base
+COPY initdb.d /docker-entrypoint-initdb.d
+COPY .env .
+RUN while read -r line; do export "$line"; done < .env
+RUN chmod +x /docker-entrypoint-initdb.d/*
+WORKDIR /docker-entrypoint-initdb.d
+
+RUN envsubst < ./001_create_database.sql
+RUN envsubst < ./002_create_user.sql
