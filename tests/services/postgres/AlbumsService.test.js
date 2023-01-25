@@ -169,5 +169,8 @@ describe('AlbumsService', () => {
       }
       expect(queryFake.calledOnce).to.equal(true);
     });
+    it('test', () => {
+      expect(true).to.be.true;
+    });
   });
 });
