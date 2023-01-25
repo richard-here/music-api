@@ -7,7 +7,12 @@ const NotFoundError = require('../../exceptions/NotFoundError');
 
 class UserService {
   constructor() {
-    this._pool = new Pool();
+    this._pool = new Pool({
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+    });
   }
 
   async addUser({ username, password, fullname }) {
