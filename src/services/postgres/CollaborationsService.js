@@ -5,7 +5,12 @@ const AuthorizationError = require('../../exceptions/AuthorizationError');
 
 class CollaborationsService {
   constructor() {
-    this._pool = new Pool();
+    this._pool = new Pool({
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+    });
   }
 
   async addCollaboration({ playlistId, userId }) {

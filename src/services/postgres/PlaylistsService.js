@@ -7,7 +7,12 @@ const { mapPlaylistDBToModel, mapPlaylistWithSongsDBToModel } = require('../../u
 
 class PlaylistsService {
   constructor() {
-    this._pool = new Pool();
+    this._pool = new Pool({
+      host: process.env.PGHOST,
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+    });
   }
 
   async addPlaylist({ name, owner }) {
