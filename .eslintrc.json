@@ -1,7 +1,10 @@
 {
+    "plugins": ["mocha", "chai"],
     "env": {
         "es2021": true,
-        "node": true
+        "node": true,
+        "commonjs": true,
+        "mocha": true
     },
     "extends": "airbnb-base",
     "overrides": [
@@ -12,6 +15,7 @@
     "rules": {
         "no-underscore-dangle": "off",
         "no-console": "off",
-        "linebreak-style": "off"
+        "linebreak-style": "off",
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": true}]
     }
 }
