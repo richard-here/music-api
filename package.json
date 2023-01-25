@@ -1,7 +1,7 @@
 {
   "name": "music-api-back-end",
   "version": "1.0.0",
-  "description": "",
+  "description": "Music API services",
   "main": "index.js",
   "scripts": {
     "start-dev": "nodemon ./src/server.js",

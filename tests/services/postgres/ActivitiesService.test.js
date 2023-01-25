@@ -26,22 +26,22 @@ describe('ActivitesService', () => {
       await activitiesService.addActivityToPlaylist(stubValue);
       expect(queryFake.calledOnce).to.equal(true);
     });
-  });
-  it('should throw an error when adding with improper values', async () => {
-    const stubValue = {
-      userId: 'user-1',
-      playlistId: 'playlist-1',
-      songId: 'song-1',
-      action: 21,
-    };
-    const queryFake = sinon.fake.resolves({});
-    sinon.replace(activitiesService._pool, 'query', queryFake);
-    try {
-      await activitiesService.addActivityToPlaylist(stubValue);
-    } catch (e) {
-      expect(e).instanceOf(InvariantError);
-    }
-    expect(queryFake.calledOnce).to.equal(true);
+    it('should throw an error when adding with improper values', async () => {
+      const stubValue = {
+        userId: 'user-1',
+        playlistId: 'playlist-1',
+        songId: 'song-1',
+        action: 21,
+      };
+      const queryFake = sinon.fake.resolves({});
+      sinon.replace(activitiesService._pool, 'query', queryFake);
+      try {
+        await activitiesService.addActivityToPlaylist(stubValue);
+      } catch (e) {
+        expect(e).instanceOf(InvariantError);
+      }
+      expect(queryFake.calledOnce).to.equal(true);
+    });
   });
 
   describe('getActivitiesFromPlaylist', () => {
